@@ -1,7 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import calendarApi from '../apis/calendarApi';
-import { onAddNewEvent, onDeleteEvent, onSetActiveEvent, onUpdateEvent } from '../store';
+import { onAddNewEvent, onDeleteEvent, onLoadEvents, onSetActiveEvent, onUpdateEvent } from '../store';
+import { convertEventstoDate } from '../helpers/convertEventstoDate';
 
 //cualquier interacción con el store se hará con este hook
 export const useCalendarStore = () => {
@@ -24,16 +25,34 @@ export const useCalendarStore = () => {
 
       // Creando
       const { data } = await calendarApi.post('/events', calendarEvent );
-      dispatch( onAddNewEvent({ ...calendarEvent, id: data.savedEvent.id, user }) );
+      dispatch( onAddNewEvent({ ...calendarEvent, id: data.event.id, user }) );
 
     } catch (error) {
         console.log(error);
-        Swal.fire('Error al guardar', error.response.data.msg, 'error');
+        Swal.fire('Error while saving', error.response.data.msg, 'error');
     }
   };
 
-  const startDeletingEvent = () => {
-    dispatch(onDeleteEvent());
+  const startDeletingEvent = async() => {
+    try{
+      await calendarApi.delete(`/events/${ activeEvent.id }`);
+      dispatch(onDeleteEvent());
+    } catch (error){
+      console.log(error);
+      Swal.fire('Error while deleting', error.response.data.msg, 'error');
+    }
+  };
+
+  const startLoadingEvents = async() => {
+    try {
+      const { data } = await calendarApi.get('/events');
+      const events = convertEventstoDate(data.events);
+      dispatch(onLoadEvents(events));
+
+    } catch (error) {
+      console.log('Error loading events');
+      console.log(error);
+    }
   }
 
   return {
@@ -42,6 +61,7 @@ export const useCalendarStore = () => {
     hasEventSelected: !!activeEvent,
     setActiveEvent,
     startSavingEvent,
-    startDeletingEvent
+    startDeletingEvent,
+    startLoadingEvents
   }
 };
