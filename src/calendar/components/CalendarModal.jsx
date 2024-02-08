@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import '../../../src/styles.css'
 import { useCalendarStore, useUiStore } from '../../hooks';
+import { getEnvVars } from '../../helpers/getEnvVars';
 
 const customStyles = {
   content: {
@@ -19,7 +20,9 @@ const customStyles = {
   },
 };
 
-Modal.setAppElement('#root')
+if(getEnvVars().VITE_MODE !== 'test'){
+  Modal.setAppElement('#root')
+}
 
 export const CalendarModal = () => {
 
